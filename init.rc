@@ -561,7 +561,7 @@ on boot
 
 # wifi display
     write /proc/sys/net/core/wmem_max   2097152
-    chmod 0666 /dev/graphics/fb5
+    chmod 0660 /dev/graphics/fb5
 
 # permission for HDMI audio path
     chown media audio /sys/class/hdmi_audio/hdmi_audio/hdmi_audio_set_ext
@@ -597,7 +597,7 @@ on boot
     write /sys/block/zram0/disksize 209715200
     chmod 0664 /sys/block/zram0/initstate
     chown system system /sys/block/zram0/initstate
-#	write /sys/block/zram0/initstate 1 (Prepare zram for swap but don't activate it yet)
+    write /sys/block/zram0/initstate 1
 
 on nonencrypted
     class_start late_start
@@ -722,9 +722,6 @@ service surfaceflinger /system/bin/surfaceflinger
     class main
     user system
     group system graphics
-    onrestart restart gsiff_daemon
-    onrestart restart media
-    onrestart restart netd
     onrestart restart zygote
 
 service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
@@ -760,6 +757,13 @@ service powersnd /system/bin/samsungpowersoundplay
     oneshot
 
 service bootanim /system/bin/bootanimation
+    class main
+    user graphics
+    group graphics system
+    disabled
+    oneshot
+
+service samsungani /system/bin/samsungani
     class main
     user graphics
     group graphics system
@@ -835,17 +839,6 @@ service immvibed /system/bin/immvibed
     group shell
     oneshot
 
-# service for TZPR provisioning version check app
-service scranton_RD /system/bin/scranton_RD
-    class main
-    user root
-    disabled
-    oneshot
-
-# start for TZPR provisioning version check app
-on property:sys.mobicoredaemon.enable=true
-    start scranton_RD
-
 service sshd /system/bin/start-ssh
     class main
     disabled
@@ -879,10 +872,3 @@ on property:ro.dumpstate.dmesg=1
 on property:init.svc.media=restarting
     exec icd_check
     start icd
-
-# Call Boeffla-Kernel init script
-service boeffla-init /sbin/boeffla-init.sh
-    class core
-    user root
-    oneshot
-
